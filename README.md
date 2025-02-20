@@ -23,7 +23,7 @@ An interactive quiz application built with React and Material-UI.
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/quiz-platform.git
+   git clone https://github.com/rahul-singh011/quiz-platform.git
    ```
 
 2. Install dependencies:
