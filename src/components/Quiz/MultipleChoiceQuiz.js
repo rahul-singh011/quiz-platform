@@ -17,8 +17,7 @@ const MultipleChoiceQuiz = ({
   question, 
   options, 
   onAnswer, 
-  timeRemaining, 
-  isAnswered,
+  timeRemaining,
   correctAnswer 
 }) => {
   const [selectedOption, setSelectedOption] = useState(null);
@@ -26,16 +25,19 @@ const MultipleChoiceQuiz = ({
   const [isCorrect, setIsCorrect] = useState(false);
 
   const handleOptionSelect = (event) => {
-    const selected = parseInt(event.target.value);
+    const selected = event.target.value;
     setSelectedOption(selected);
+    // Convert selected to number for comparison
+    const isAnswerCorrect = parseInt(selected) === correctAnswer;
+    setIsCorrect(isAnswerCorrect);
     setShowFeedback(true);
-    setIsCorrect(selected === correctAnswer);
   };
 
   const handleSubmit = () => {
     if (selectedOption !== null) {
-      onAnswer(selectedOption);
-      setShowFeedback(false); 
+      onAnswer(parseInt(selectedOption)); 
+      setShowFeedback(false);
+      setSelectedOption(null);
     }
   };
 
@@ -50,17 +52,20 @@ const MultipleChoiceQuiz = ({
           Time remaining: {timeRemaining} seconds
         </Typography>
 
-        <RadioGroup value={selectedOption} onChange={handleOptionSelect}>
+        <RadioGroup 
+          value={selectedOption} 
+          onChange={handleOptionSelect}
+        >
           {options.map((option, index) => (
             <FormControlLabel
               key={index}
-              value={index}
+              value={index.toString()}
               control={<Radio />}
               label={
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   {option}
-                  {showFeedback && selectedOption === index && (
-                    index === correctAnswer ? (
+                  {showFeedback && selectedOption === index.toString() && (
+                    parseInt(selectedOption) === correctAnswer ? (
                       <CheckCircleIcon color="success" />
                     ) : (
                       <CancelIcon color="error" />
@@ -68,13 +73,12 @@ const MultipleChoiceQuiz = ({
                   )}
                 </Box>
               }
-              disabled={isAnswered}
               sx={{
                 ...(showFeedback && index === correctAnswer && {
                   backgroundColor: 'rgba(76, 175, 80, 0.1)',
                   borderRadius: 1,
                 }),
-                ...(showFeedback && selectedOption === index && index !== correctAnswer && {
+                ...(showFeedback && parseInt(selectedOption) === index && index !== correctAnswer && {
                   backgroundColor: 'rgba(244, 67, 54, 0.1)',
                   borderRadius: 1,
                 })
@@ -99,7 +103,7 @@ const MultipleChoiceQuiz = ({
           variant="contained" 
           color="primary"
           onClick={handleSubmit}
-          disabled={selectedOption === null || isAnswered}
+          disabled={selectedOption === null}
           sx={{ marginTop: 2 }}
         >
           Next Question
