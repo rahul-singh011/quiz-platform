@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Typography, Button, Box, Paper } from '@mui/material';
+import { Container, Typography, Button, Box, Paper, LinearProgress } from '@mui/material';
 import MultipleChoiceQuiz from '../components/Quiz/MultipleChoiceQuiz';
 import IntegerQuiz from '../components/Quiz/IntegerQuiz';
 import { multipleChoiceQuestions, integerQuestions } from '../data/quizData';
@@ -101,45 +101,18 @@ const QuizPage = () => {
             Choose Quiz Type
           </Typography>
           
-          <Paper 
-            elevation={3} 
-            sx={{ 
-              p: 3, 
-              mb: 4, 
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #e0e0e0'
-            }}
-          >
-            <Typography 
-              variant="h6" 
-              gutterBottom 
-              sx={{ 
-                color: 'primary.main',
-                borderBottom: '2px solid #1976d2',
-                pb: 1,
-                mb: 2
-              }}
-            >
+          <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
+            <Typography variant="h6" gutterBottom>
               Instructions:
             </Typography>
-            <Box sx={{ textAlign: 'left' }}>
-              <Typography component="div" sx={{ mb: 2 }}>
-                <ol style={{ margin: 0, paddingLeft: '20px' }}>
-                  <li style={{ marginBottom: '8px' }}>
-                    For multiple-choice questions, select the one best answer (A, B, C, or D).
-                  </li>
-                  <li style={{ marginBottom: '8px' }}>
-                    For integer-type questions, write your numerical answer clearly.
-                  </li>
-                  <li style={{ marginBottom: '8px' }}>
-                    No calculators unless specified.
-                  </li>
-                  <li style={{ marginBottom: '8px' }}>
-                    You have 30 minutes to complete this quiz.
-                  </li>
-                </ol>
-              </Typography>
-            </Box>
+            <Typography component="div">
+              <ol>
+                <li>Select your preferred quiz type</li>
+                <li>Each question has a 30-second time limit</li>
+                <li>You'll get immediate feedback on your answers</li>
+                <li>Your progress will be saved automatically</li>
+              </ol>
+            </Typography>
           </Paper>
 
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -201,20 +174,46 @@ const QuizPage = () => {
         <Typography variant="h6" gutterBottom>
           Question {currentQuestionIndex + 1} of {questions.length}
         </Typography>
+        
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            Time Remaining: {timeRemaining} seconds
+          </Typography>
+          <LinearProgress 
+            variant="determinate" 
+            value={(timeRemaining / 30) * 100} 
+            sx={{ mt: 1 }}
+          />
+        </Box>
+
         {quizType === 'multiple' ? (
           <MultipleChoiceQuiz
             question={currentQuestion.question}
             options={currentQuestion.options}
             onAnswer={handleAnswer}
             timeRemaining={timeRemaining}
+            correctAnswer={currentQuestion.correctAnswer}
           />
         ) : (
           <IntegerQuiz
             question={currentQuestion.question}
             onAnswer={handleAnswer}
             timeRemaining={timeRemaining}
+            correctAnswer={currentQuestion.correctAnswer}
           />
         )}
+
+        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }}>
+          <Button 
+            variant="outlined" 
+            onClick={handleRestartQuiz}
+          >
+            Quit Quiz
+          </Button>
+          <Typography variant="h6">
+            Score: {score}
+          </Typography>
+        </Box>
       </Box>
     </Container>
   );
