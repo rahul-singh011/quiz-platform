@@ -13,27 +13,30 @@ const QuizPage = () => {
   const [timeRemaining, setTimeRemaining] = useState(30);
   const [quizCompleted, setQuizCompleted] = useState(false);
 
-  const handleQuizComplete = useCallback(() => {
+  const handleQuizComplete = useCallback((finalScore, finalAnswers) => {
     setQuizCompleted(true);
     const totalQuestions = quizType === 'multiple' ? multipleChoiceQuestions.length : integerQuestions.length;
     
+    const percentage = ((finalScore / totalQuestions) * 100).toFixed(1);
+
     const attempt = {
       date: new Date(),
       quizType,
-      score: score,
+      score: finalScore,
       totalQuestions,
-      percentage: ((score / totalQuestions) * 100).toFixed(1),
-      answers
+      percentage: Number(percentage),
+      answers: finalAnswers
     };
 
     console.log('Saving final attempt:', {
-      finalScore: score,
+      score: finalScore,
       totalQuestions,
-      calculatedPercentage: ((score / totalQuestions) * 100).toFixed(1)
+      percentage,
+      answers: finalAnswers.map(a => a.isCorrect)
     });
 
     saveQuizAttempt(attempt);
-  }, [quizType, score, answers]);
+  }, [quizType]);
 
   const handleTimeUp = useCallback(() => {
     if (!quizCompleted && timeRemaining > 0) {
@@ -52,10 +55,10 @@ const QuizPage = () => {
         setCurrentQuestionIndex(prev => prev + 1);
         setTimeRemaining(30);
       } else {
-        handleQuizComplete();
+        handleQuizComplete(score, answers);
       }
     }
-  }, [currentQuestionIndex, quizCompleted, quizType, handleQuizComplete, timeRemaining]);
+  }, [currentQuestionIndex, quizCompleted, quizType, handleQuizComplete, timeRemaining, score, answers]);
 
   const handleAnswer = (answer) => {
     const questions = quizType === 'multiple' ? multipleChoiceQuestions : integerQuestions;
@@ -69,19 +72,24 @@ const QuizPage = () => {
       setScore(prevScore => prevScore + 1);
     }
 
-    setAnswers(prev => [...prev, {
+    const newAnswer = {
       question: currentQuestion.question,
       userAnswer: answer,
       correctAnswer: currentQuestion.correctAnswer,
       isCorrect,
       timeTaken: 30 - timeRemaining
-    }]);
+    };
+
+    setAnswers(prev => [...prev, newAnswer]);
 
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
       setTimeRemaining(30);
     } else {
-      handleQuizComplete();
+      Promise.resolve().then(() => {
+        const finalScore = isCorrect ? score + 1 : score;
+        handleQuizComplete(finalScore, [...answers, newAnswer]);
+      });
     }
   };
 
