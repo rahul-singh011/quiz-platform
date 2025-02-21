@@ -12,35 +12,28 @@ const QuizPage = () => {
   const [answers, setAnswers] = useState([]);
   const [timeRemaining, setTimeRemaining] = useState(30);
   const [quizCompleted, setQuizCompleted] = useState(false);
-  const [isCorrect, setIsCorrect] = useState(true);
 
   const handleQuizComplete = useCallback(() => {
-    // Update score first, then save the attempt
-    setScore(currentScore => {
-      const totalQuestions = quizType === 'multiple' ? multipleChoiceQuestions.length : integerQuestions.length;
-      
-      const attempt = {
-        date: new Date(),
-        quizType,
-        score: currentScore,
-        totalQuestions,
-        percentage: ((currentScore / totalQuestions) * 100).toFixed(1),
-        answers
-      };
+    setQuizCompleted(true);
+    const totalQuestions = quizType === 'multiple' ? multipleChoiceQuestions.length : integerQuestions.length;
+    
+    const attempt = {
+      date: new Date(),
+      quizType,
+      score: score,
+      totalQuestions,
+      percentage: ((score / totalQuestions) * 100).toFixed(1),
+      answers
+    };
 
-      console.log('Saving final attempt:', {
-        finalScore: currentScore,
-        totalQuestions,
-        calculatedPercentage: ((currentScore / totalQuestions) * 100).toFixed(1)
-      });
-
-      setQuizCompleted(true);
-      
-      saveQuizAttempt(attempt);
-      
-      return currentScore;
+    console.log('Saving final attempt:', {
+      finalScore: score,
+      totalQuestions,
+      calculatedPercentage: ((score / totalQuestions) * 100).toFixed(1)
     });
-  }, [quizType, answers]);
+
+    saveQuizAttempt(attempt);
+  }, [quizType, score, answers]);
 
   const handleTimeUp = useCallback(() => {
     if (!quizCompleted && timeRemaining > 0) {
@@ -52,7 +45,7 @@ const QuizPage = () => {
         userAnswer: null,
         correctAnswer: currentQuestion.correctAnswer,
         isCorrect: false,
-        timeTaken: 30
+        timeTaken: timeRemaining
       }]);
 
       if (currentQuestionIndex < questions.length - 1) {
@@ -62,19 +55,7 @@ const QuizPage = () => {
         handleQuizComplete();
       }
     }
-  }, [currentQuestionIndex, quizCompleted, quizType, handleQuizComplete]);
-
-  useEffect(() => {
-    if (!quizCompleted && timeRemaining > 0) {
-      const timer = setInterval(() => {
-        setTimeRemaining((prev) => prev - 1);
-      }, 1000);
-
-      return () => clearInterval(timer);
-    } else if (timeRemaining === 0) {
-      handleTimeUp();
-    }
-  }, [timeRemaining, quizCompleted, handleTimeUp]);
+  }, [currentQuestionIndex, quizCompleted, quizType, handleQuizComplete, timeRemaining]);
 
   const handleAnswer = (answer) => {
     const questions = quizType === 'multiple' ? multipleChoiceQuestions : integerQuestions;
@@ -84,18 +65,8 @@ const QuizPage = () => {
       ? String(answer) === String(currentQuestion.correctAnswer)
       : Number(answer) === Number(currentQuestion.correctAnswer);
 
-    console.log('Answer check:', {
-      userAnswer: answer,
-      correctAnswer: currentQuestion.correctAnswer,
-      isCorrect
-    });
-
     if (isCorrect) {
-      setScore(prevScore => {
-        const newScore = prevScore + 1;
-        console.log('Updating score:', newScore);
-        return newScore;
-      });
+      setScore(prevScore => prevScore + 1);
     }
 
     setAnswers(prev => [...prev, {
@@ -110,9 +81,21 @@ const QuizPage = () => {
       setCurrentQuestionIndex(prev => prev + 1);
       setTimeRemaining(30);
     } else {
-      setTimeout(() => handleQuizComplete(), 0);
+      handleQuizComplete();
     }
   };
+
+  useEffect(() => {
+    if (!quizCompleted && timeRemaining > 0) {
+      const timer = setInterval(() => {
+        setTimeRemaining((prev) => prev - 1);
+      }, 1000);
+
+      return () => clearInterval(timer);
+    } else if (timeRemaining === 0) {
+      handleTimeUp();
+    }
+  }, [timeRemaining, quizCompleted, handleTimeUp]);
 
   const handleRestartQuiz = () => {
     setQuizType(null);
@@ -121,7 +104,6 @@ const QuizPage = () => {
     setAnswers([]);
     setTimeRemaining(30);
     setQuizCompleted(false);
-    setIsCorrect(true);
   };
 
   if (!quizType) {
