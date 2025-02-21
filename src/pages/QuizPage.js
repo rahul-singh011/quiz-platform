@@ -12,21 +12,38 @@ const QuizPage = () => {
   const [answers, setAnswers] = useState([]);
   const [timeRemaining, setTimeRemaining] = useState(30);
   const [quizCompleted, setQuizCompleted] = useState(false);
+  const [isCorrect, setIsCorrect] = useState(true);
 
   const handleQuizComplete = useCallback(() => {
-    setQuizCompleted(true);
-    const attempt = {
-      date: new Date(),
-      quizType,
-      score,
-      totalQuestions: quizType === 'multiple' ? multipleChoiceQuestions.length : integerQuestions.length,
-      answers
-    };
-    saveQuizAttempt(attempt);
-  }, [quizType, score, answers]);
+    // Update score first, then save the attempt
+    setScore(currentScore => {
+      const totalQuestions = quizType === 'multiple' ? multipleChoiceQuestions.length : integerQuestions.length;
+      
+      const attempt = {
+        date: new Date(),
+        quizType,
+        score: currentScore,
+        totalQuestions,
+        percentage: ((currentScore / totalQuestions) * 100).toFixed(1),
+        answers
+      };
+
+      console.log('Saving final attempt:', {
+        finalScore: currentScore,
+        totalQuestions,
+        calculatedPercentage: ((currentScore / totalQuestions) * 100).toFixed(1)
+      });
+
+      setQuizCompleted(true);
+      
+      saveQuizAttempt(attempt);
+      
+      return currentScore;
+    });
+  }, [quizType, answers]);
 
   const handleTimeUp = useCallback(() => {
-    if (!quizCompleted) {
+    if (!quizCompleted && timeRemaining > 0) {
       const questions = quizType === 'multiple' ? multipleChoiceQuestions : integerQuestions;
       const currentQuestion = questions[currentQuestionIndex];
       
@@ -62,10 +79,23 @@ const QuizPage = () => {
   const handleAnswer = (answer) => {
     const questions = quizType === 'multiple' ? multipleChoiceQuestions : integerQuestions;
     const currentQuestion = questions[currentQuestionIndex];
-    const isCorrect = answer === currentQuestion.correctAnswer;
+    
+    const isCorrect = quizType === 'multiple' 
+      ? String(answer) === String(currentQuestion.correctAnswer)
+      : Number(answer) === Number(currentQuestion.correctAnswer);
+
+    console.log('Answer check:', {
+      userAnswer: answer,
+      correctAnswer: currentQuestion.correctAnswer,
+      isCorrect
+    });
 
     if (isCorrect) {
-      setScore(prev => prev + 1);
+      setScore(prevScore => {
+        const newScore = prevScore + 1;
+        console.log('Updating score:', newScore);
+        return newScore;
+      });
     }
 
     setAnswers(prev => [...prev, {
@@ -80,7 +110,7 @@ const QuizPage = () => {
       setCurrentQuestionIndex(prev => prev + 1);
       setTimeRemaining(30);
     } else {
-      handleQuizComplete();
+      setTimeout(() => handleQuizComplete(), 0);
     }
   };
 
@@ -91,6 +121,7 @@ const QuizPage = () => {
     setAnswers([]);
     setTimeRemaining(30);
     setQuizCompleted(false);
+    setIsCorrect(true);
   };
 
   if (!quizType) {
@@ -140,6 +171,7 @@ const QuizPage = () => {
   if (quizCompleted) {
     const totalQuestions = quizType === 'multiple' ? 
       multipleChoiceQuestions.length : integerQuestions.length;
+    const percentage = ((score / totalQuestions) * 100).toFixed(1);
     
     return (
       <Container maxWidth="sm">
@@ -151,7 +183,7 @@ const QuizPage = () => {
             Your Score: {score} out of {totalQuestions}
           </Typography>
           <Typography variant="h6" gutterBottom>
-            Percentage: {((score / totalQuestions) * 100).toFixed(1)}%
+            Percentage: {percentage}%
           </Typography>
           <Button 
             variant="contained" 
